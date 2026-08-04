@@ -35,6 +35,10 @@ services:
         fromDatabase:
           name: traccar-db
           property: connectionString
+      - key: WEB_ADDRESS
+        value: 0.0.0.0
+      - key: WEB_PORT
+        value: "8082"
       - key: PORT
         value: "8082"
 
