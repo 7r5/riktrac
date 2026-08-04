@@ -6,7 +6,7 @@ services:
     repo: https://github.com/7r5/riktrac.git
     branch: master
     rootDir: backend
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: ./Dockerfile
     region: oregon
     plan: free
     autoDeployTrigger: commit
