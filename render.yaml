@@ -15,10 +15,8 @@ services:
         value: "true"
       - key: DATABASE_DRIVER
         value: org.postgresql.Driver
-      # Set this in Render dashboard as JDBC URL:
-      # jdbc:postgresql://<host>:5432/<database>
-      - key: DATABASE_URL
-        sync: false
+      # Render supplies a PostgreSQL connection string here.
+      # The backend wrapper converts it to JDBC at startup.
       - key: DATABASE_USER
         fromDatabase:
           name: traccar-db
@@ -36,6 +34,8 @@ services:
         fromDatabase:
           name: traccar-db
           property: connectionString
+      - key: PORT
+        value: "8082"
 
   # Frontend repo. Merge to master triggers deploy.
   - type: web
