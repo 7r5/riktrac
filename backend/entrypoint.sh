@@ -6,4 +6,4 @@ if [ -n "${POSTGRES_CONNECTION_STRING:-}" ] && [ -z "${DATABASE_URL:-}" ]; then
   export DATABASE_URL="$jdbc_url"
 fi
 
-exec "$@"
+exec /opt/traccar/jre/bin/java -XX:+ExitOnOutOfMemoryError "$@"
