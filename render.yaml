@@ -1,0 +1,70 @@
+previews:
+  generation: automatic
+  expireAfterDays: 7
+
+services:
+  # MySQL for Traccar metadata and history.
+  - type: pserv
+    name: traccar-db
+    runtime: image
+    image:
+      url: docker.io/mysql:lts
+    region: oregon
+    plan: starter
+    envVars:
+      - key: MYSQL_RANDOM_ROOT_PASSWORD
+        value: "yes"
+      - key: MYSQL_DATABASE
+        value: traccar
+      - key: MYSQL_USER
+        value: traccar
+      - key: MYSQL_PASSWORD
+        sync: false
+    disk:
+      name: traccar-mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 10
+
+  # Official Traccar backend image.
+  - type: pserv
+    name: traccar-backend
+    runtime: image
+    image:
+      url: docker.io/traccar/traccar:latest
+    region: oregon
+    plan: starter
+    envVars:
+      - key: PORT
+        value: "8082"
+      - key: CONFIG_USE_ENVIRONMENT_VARIABLES
+        value: "true"
+      - key: DATABASE_DRIVER
+        value: com.mysql.cj.jdbc.Driver
+      - key: DATABASE_URL
+        value: jdbc:mysql://traccar-db:3306/traccar?zeroDateTimeBehavior=round&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false&allowMultiQueries=true&autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&sessionVariables=sql_mode=''
+      - key: DATABASE_USER
+        value: traccar
+      - key: DATABASE_PASSWORD
+        fromService:
+          type: pserv
+          name: traccar-db
+          envVarKey: MYSQL_PASSWORD
+    disk:
+      name: traccar-logs
+      mountPath: /opt/traccar/logs
+      sizeGB: 5
+
+  # Frontend from the 7r5 fork. Its nginx.conf proxies /api and /api/socket
+  # to traccar-backend:8082 inside Render private network.
+  - type: web
+    name: traccar-web
+    runtime: docker
+    repo: https://github.com/7r5/traccar-web.git
+    branch: master
+    region: oregon
+    plan: starter
+    autoDeployTrigger: commit
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "80"
