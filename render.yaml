@@ -5,6 +5,7 @@ services:
     runtime: docker
     repo: https://github.com/7r5/riktrac.git
     branch: master
+    rootDir: backend
     dockerfilePath: ./backend/Dockerfile
     region: oregon
     plan: free
