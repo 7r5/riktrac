@@ -3,68 +3,62 @@ previews:
   expireAfterDays: 7
 
 services:
-  # MySQL for Traccar metadata and history.
-  - type: pserv
-    name: traccar-db
-    runtime: image
-    image:
-      url: docker.io/library/mysql:8.4
-    region: oregon
-    plan: starter
-    envVars:
-      - key: MYSQL_RANDOM_ROOT_PASSWORD
-        value: "yes"
-      - key: MYSQL_DATABASE
-        value: traccar
-      - key: MYSQL_USER
-        value: traccar
-      - key: MYSQL_PASSWORD
-        sync: false
-    disk:
-      name: traccar-mysql-data
-      mountPath: /var/lib/mysql
-      sizeGB: 10
-
-  # Official Traccar backend image.
-  - type: pserv
+  # Backend service built from this repo, using official Traccar image.
+  - type: web
     name: traccar-backend
-    runtime: image
-    image:
-      url: docker.io/traccar/traccar:latest
+    runtime: docker
+    repo: https://github.com/7r5/riktrac.git
+    branch: master
+    dockerfilePath: ./backend/Dockerfile
     region: oregon
-    plan: starter
+    plan: free
+    autoDeployTrigger: commit
+    healthCheckPath: /api/health
     envVars:
-      - key: PORT
-        value: "8082"
       - key: CONFIG_USE_ENVIRONMENT_VARIABLES
         value: "true"
       - key: DATABASE_DRIVER
-        value: com.mysql.cj.jdbc.Driver
+        value: org.postgresql.Driver
+      # Set this in Render dashboard as JDBC URL:
+      # jdbc:postgresql://<host>:5432/<database>
       - key: DATABASE_URL
-        value: jdbc:mysql://traccar-db:3306/traccar?zeroDateTimeBehavior=round&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false&allowMultiQueries=true&autoReconnect=true&useUnicode=yes&characterEncoding=UTF-8&sessionVariables=sql_mode=''
+        sync: false
       - key: DATABASE_USER
-        value: traccar
-      - key: DATABASE_PASSWORD
-        fromService:
-          type: pserv
+        fromDatabase:
           name: traccar-db
-          envVarKey: MYSQL_PASSWORD
-    disk:
-      name: traccar-logs
-      mountPath: /opt/traccar/logs
-      sizeGB: 5
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: traccar-db
+          property: password
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: traccar-db
+          property: database
+      # Convenience variable (not used directly by Traccar) to copy host:port.
+      - key: POSTGRES_CONNECTION_STRING
+        fromDatabase:
+          name: traccar-db
+          property: connectionString
 
-  # Frontend from the 7r5 fork. Its nginx.conf proxies /api and /api/socket
-  # to traccar-backend:8082 inside Render private network.
+  # Frontend repo. Merge to master triggers deploy.
   - type: web
     name: traccar-web
     runtime: docker
     repo: https://github.com/7r5/traccar-web.git
     branch: master
     region: oregon
-    plan: starter
+    plan: free
     autoDeployTrigger: commit
     healthCheckPath: /
     envVars:
       - key: PORT
         value: "80"
+
+databases:
+  - name: traccar-db
+    plan: free
+    region: oregon
+    databaseName: traccar
+    user: traccar
+    ipAllowList: []

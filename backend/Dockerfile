@@ -1,0 +1,1 @@
+FROM traccar/traccar:latest
