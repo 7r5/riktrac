@@ -45,19 +45,15 @@ services:
       - key: PORT
         value: "8082"
 
-  # Frontend repo. Merge to master triggers deploy.
+  # Frontend URL now redirects to the backend, which serves the actual Traccar UI.
   - type: web
     name: traccar-web
-    runtime: docker
-    repo: https://github.com/7r5/traccar-web.git
-    branch: master
+    runtime: static
     region: oregon
     plan: free
     autoDeployTrigger: commit
-    healthCheckPath: /
-    envVars:
-      - key: PORT
-        value: "80"
+    buildCommand: "true"
+    staticPublishPath: ./frontend
 
 databases:
   - name: traccar-db
