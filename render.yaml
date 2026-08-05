@@ -14,6 +14,9 @@ services:
     envVars:
       - key: CONFIG_USE_ENVIRONMENT_VARIABLES
         value: "true"
+      # Skip protocol listeners on Render so the web/API server comes up quickly.
+      - key: PROTOCOLS_ENABLE
+        value: "none"
       - key: DATABASE_DRIVER
         value: org.postgresql.Driver
       # Render supplies a PostgreSQL connection string here.
